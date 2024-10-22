@@ -1,0 +1,88 @@
+
+import React from 'react';
+import axios from 'axios';
+import { useState, useEffect } from 'react';
+
+function DataFrdToOE() {
+    const [enqdata, setEnquiry] = useState([]);
+    const [cibilScores, setCibilScores] = useState({}); 
+
+    function getEnquiryByCibil() {
+        axios.get('http://localhost:8855/getAllByLoanStatus/fwdToOE')
+            .then(res => {
+                if (res.status === 200) {
+                    console.log(res.data)
+                    setEnquiry(res.data);
+                }
+            })
+            .catch(error => console.error('Something went wrong....!', error));
+    }
+
+    useEffect(() => getEnquiryByCibil(), []);
+
+    
+    function fetchCibilScore(customerEnquiryId) {
+        axios.post(`http://localhost:8856/calulateCibilSc/${customerEnquiryId}`)
+            .then(res => {
+                if (res.status === 200 && res.data) {
+                    setCibilScores(prevScores => ({
+                        ...prevScores,
+                        [customerEnquiryId]: res.data.cibilScore 
+                    }));
+                    window.alert(`CIBIL Score is calculated`)
+                }
+            })
+            .catch(error=>('Something went wrong....!'));
+    }
+
+    return (
+        <div>
+            <table className='table table-bordered table-primary'>
+                <thead>
+                    <tr>
+                        <th>Customer Id</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Contact Number</th>
+                        <th>EmailId</th>
+                        <th>AadharCard Number</th>
+                        <th>Pancard Number</th>
+                        <th>CIBIL Status</th>
+                        <th>Loan Status</th>
+                        <th>CIBIL Calculated</th> 
+                        <th>CIBIL Score</th> 
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                        enqdata.map((enq, index) => (
+                            <tr key={index}>
+                                <td>{enq.customerEnquiryId}</td>
+                                <td>{enq.firstName}</td>
+                                <td>{enq.lastName}</td>
+                                <td>{enq.contactNumber}</td>
+                                <td>{enq.emailId}</td>
+                                <td>{enq.aadharCardNumber}</td>
+                                <td>{enq.pancardNumber}</td>
+                                <td>{enq.cibilStatus}</td>
+                                <td>{enq.loanStatus}</td>
+                                <td>
+                                    <button
+                                        className="btn btn-info"
+                                        onClick={() => fetchCibilScore(enq.customerEnquiryId)}
+                                    >Calculate CIBIL
+                                    </button>
+                                </td>
+                                <td>
+                                    {cibilScores[enq.customerEnquiryId] || 'Not calculated'}
+                                </td>
+                            </tr>
+                        ))
+                    }
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+export default DataFrdToOE;
